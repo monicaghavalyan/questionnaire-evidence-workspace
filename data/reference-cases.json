@@ -1,0 +1,120 @@
+{
+  "_comment": [
+    "FIVE REFERENCE CASES. Expected values were derived BY HAND by reading the passages in",
+    "data/starter-pack/seed.json and data/additions.json against the four rules in",
+    "data/starter-pack/domain.md. They were NOT produced by running this application.",
+    "",
+    "RC-1..RC-3 are single-question cases. RC-4 and RC-5 are scripted scenarios whose steps",
+    "are listed below and implemented in checks/run_checks.py.",
+    "",
+    "The supplied data/starter-pack/expected-seed-results.json covers Q1, Q2, Q3 and names the",
+    "approval-reuse and source-change scenarios. RC-1..RC-3 restate those three with the extra",
+    "structural fields this application exposes; RC-4 and RC-5 implement the two named scenarios.",
+    "No supplied expected value was changed. The additions in data/additions.json introduce no",
+    "aggregate that would require recomputing a supplied total."
+  ],
+  "cases": [
+    {
+      "id": "RC-1",
+      "title": "A supported question is answered with a citation that exists and supports it",
+      "covers": "Minimum demonstration 1",
+      "rule": "Rule 1 - answer only from the supplied documents",
+      "kind": "single_question",
+      "question_id": "Q3",
+      "question_text": "When is email support available?",
+      "derivation": "SUPPORT-v1 is current (status=current, nothing supersedes it). SUPPORT-v1:p1 states the hours directly.",
+      "expect": {
+        "status": "answered",
+        "cited_passage_ids": ["SUPPORT-v1:p1"],
+        "conflicting_passage_ids": [],
+        "answer_must_contain": ["Monday", "09:00", "17:00"],
+        "owner": null,
+        "all_citations_exist": true,
+        "all_citations_current": true,
+        "all_excerpts_verified": true
+      }
+    },
+    {
+      "id": "RC-2",
+      "title": "An undocumented capability stays unresolved and is routed, not guessed",
+      "covers": "Minimum demonstration 2",
+      "rule": "Rule 1 - an undocumented feature is unknown, not supported or unsupported; Rule 4 - owner from the supplied mapping",
+      "kind": "single_question",
+      "question_id": "Q2",
+      "question_text": "Is JSON export available?",
+      "derivation": "The token 'JSON' appears in no passage of any document, current or superseded. Nothing establishes that JSON export exists or that it does not. Topic 'exports' maps to 'Product reviewer' in the supplied owners map.",
+      "expect": {
+        "status": "unresolved",
+        "owner": "Product reviewer",
+        "reason_must_contain": ["undocumented"],
+        "answer_must_not_contain": ["JSON export is available", "JSON export is not available", "Yes,", "No,"],
+        "cited_passage_ids": [],
+        "conflicting_passage_ids": []
+      }
+    },
+    {
+      "id": "RC-3",
+      "title": "An explicitly superseded policy loses, and the conflict stays visible",
+      "covers": "Minimum demonstration 3",
+      "rule": "Rule 2 - authority comes only from the supersedes field, and replaced text stays available",
+      "kind": "single_question",
+      "question_id": "Q1",
+      "question_text": "Can free-plan users export CSV?",
+      "derivation": "EXPORT-v2 declares supersedes=EXPORT-v1, so EXPORT-v2:p1 is authoritative and says free-plan users cannot export CSV. EXPORT-v1:p1 says the opposite and must be shown as a conflict rather than hidden. Both documents are dated, but the date is not what decides this.",
+      "expect": {
+        "status": "answered",
+        "cited_passage_ids": ["EXPORT-v2:p1"],
+        "conflicting_passage_ids": ["EXPORT-v1:p1"],
+        "answer_must_contain": ["paid"],
+        "all_citations_current": true
+      }
+    },
+    {
+      "id": "RC-4",
+      "title": "An approved correction is reused on the same question; an unapproved edit is not",
+      "covers": "Minimum demonstration 4",
+      "rule": "Rule 3 - only an approved answer can be reused; an unapproved edit is a draft",
+      "kind": "scenario",
+      "steps": [
+        "Draft Q1 and confirm its status is 'answered'.",
+        "Edit the Q1 answer to the reviewer wording 'No. CSV export is limited to paid plans.' and approve it.",
+        "Draft Q13, whose text is identical to Q1's.",
+        "Q13 must come back as the approved wording, with origin 'reused_approved', carrying the approval timestamp and the approved answer's source passage ids.",
+        "Separately, edit the Q9 answer WITHOUT approving it, then re-draft Q9.",
+        "Q9 must NOT be served as approved knowledge: its status must stay 'draft'."
+      ],
+      "derivation": "Q13's text is byte-identical to Q1's text, so exact-match reuse applies. The Q9 edit is never approved, so rule 3 forbids reusing it as approved knowledge.",
+      "expect": {
+        "reused_answer_text": "No. CSV export is limited to paid plans.",
+        "reused_origin": "reused_approved",
+        "reused_status": "approved",
+        "reused_sources": ["EXPORT-v2:p1"],
+        "reused_has_approved_at": true,
+        "unapproved_edit_status": "draft",
+        "unapproved_edit_not_reused": true
+      }
+    },
+    {
+      "id": "RC-5",
+      "title": "A changed source version sends an approved answer back for review; reload preserves state",
+      "covers": "Minimum demonstration 5",
+      "rule": "Rule 3 - mark an approved answer for review if a referenced document version changes",
+      "kind": "scenario",
+      "steps": [
+        "Start from the approved Q1 answer created in RC-4, whose source snapshot is {EXPORT-v2: 2}.",
+        "Run scripts/bump_source_version.py --mode bump, which raises EXPORT-v2 from version 2 to version 3 without changing its text.",
+        "Re-open the queue. The Q1 answer must be 'needs_review' and must not be reused for Q13.",
+        "Reload the application (new database connection) and confirm the needs_review state and the stored evidence are still there.",
+        "Confirm an approved answer whose sources did NOT change is still 'approved' after the bump."
+      ],
+      "derivation": "The approval snapshot records the version of every cited document at approval time. After the bump, current EXPORT-v2 is version 3 while the snapshot says 2, so the referenced source version has changed. Q12's approved answer cites BILLING-v1, which is untouched, so it must stay approved.",
+      "expect": {
+        "q1_status_after_bump": "needs_review",
+        "q1_reusable_after_bump": false,
+        "q1_status_survives_reload": "needs_review",
+        "q1_evidence_survives_reload": true,
+        "unaffected_approved_status": "approved"
+      }
+    }
+  ]
+}

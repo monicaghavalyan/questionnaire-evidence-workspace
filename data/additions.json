@@ -1,0 +1,75 @@
+{
+  "_comment": [
+    "Fixtures ADDED by the candidate. The supplied starter pack seed is kept unchanged in",
+    "data/starter-pack/seed.json and is loaded first; this file is merged on top of it.",
+    "Generation method: hand-written. No random generation, so no seed value applies.",
+    "Rules followed: only the four rules in data/starter-pack/domain.md. No new business",
+    "policies were invented. Passage IDs follow the supplied <DOC-ID>:p<N> convention.",
+    "Purpose of each addition is recorded in '_why' fields below."
+  ],
+  "documents": [
+    {
+      "_why": "Second explicitly-superseded pair, so the authority logic is not exercised only by the supplied CSV-export case.",
+      "id": "RETENTION-v1",
+      "version": 1,
+      "date": "2026-02-01",
+      "status": "superseded",
+      "supersedes": null,
+      "passages": [
+        {
+          "id": "RETENTION-v1:p1",
+          "text": "Deleted projects are retained for 90 days and can be restored by support."
+        }
+      ]
+    },
+    {
+      "_why": "Current replacement for RETENTION-v1. Note its date is EARLIER than some current documents, to prove authority comes from the supersedes field and not from the date.",
+      "id": "RETENTION-v2",
+      "version": 2,
+      "date": "2026-03-01",
+      "status": "current",
+      "supersedes": "RETENTION-v1",
+      "passages": [
+        {
+          "id": "RETENTION-v2:p1",
+          "text": "Deleted projects are retained for 30 days. After 30 days they cannot be restored."
+        }
+      ]
+    }
+  ],
+  "questions": [
+    {
+      "_why": "Supported answer that requires resolving the added superseded pair.",
+      "id": "Q9",
+      "topic": "retention",
+      "text": "How long are deleted projects retained?"
+    },
+    {
+      "_why": "Undocumented topic. No passage anywhere mentions a guaranteed response time, so this must stay unresolved.",
+      "id": "Q10",
+      "topic": "support",
+      "text": "Is there a guaranteed response time for email support?"
+    },
+    {
+      "_why": "Partially documented. ACCESS-v1 says account owners can invite team members but says nothing about plan tiers, so the plan-specific part is undocumented.",
+      "id": "Q11",
+      "topic": "access",
+      "text": "Can free-plan users invite team members?"
+    },
+    {
+      "_why": "Straightforward supported answer, used as a control case.",
+      "id": "Q12",
+      "topic": "billing",
+      "text": "Are paid subscriptions billed in USD?"
+    },
+    {
+      "_why": "Exact duplicate of Q1's text with a different question id. Drives the approved-answer reuse check.",
+      "id": "Q13",
+      "topic": "exports",
+      "text": "Can free-plan users export CSV?"
+    }
+  ],
+  "owners": {
+    "retention": "Product reviewer"
+  }
+}

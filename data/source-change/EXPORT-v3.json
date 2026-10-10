@@ -1,0 +1,18 @@
+{
+  "_comment": [
+    "Not loaded at startup. Applied on demand by scripts/bump_source_version.py --mode supersede",
+    "to demonstrate reference case RC-5 (an approved answer's source changes).",
+    "The wording restates the EXPORT-v2 rule; it adds no new policy."
+  ],
+  "id": "EXPORT-v3",
+  "version": 3,
+  "date": "2026-09-01",
+  "status": "current",
+  "supersedes": "EXPORT-v2",
+  "passages": [
+    {
+      "id": "EXPORT-v3:p1",
+      "text": "CSV exports are available on paid plans only. Free-plan users cannot export CSV."
+    }
+  ]
+}
