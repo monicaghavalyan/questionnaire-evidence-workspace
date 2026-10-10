@@ -1,0 +1,6 @@
+# Python 3.11+ (developed and tested on CPython 3.13.16)
+#
+# anthropic is only needed for MODEL_MODE=live. The replay and stub modes, the loader,
+# the review logic and checks/run_checks.py all run on the standard library alone.
+anthropic==1.13.0
+streamlit==1.65.0
