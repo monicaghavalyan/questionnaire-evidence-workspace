@@ -1,33 +1,33 @@
 {
   "exercise": "Junior AI Engineer take-home, Alternative C - Questionnaire review",
   "starter_pack_version": "2026-10-02",
-  "completed": "REPLACE_WITH_SUBMISSION_DATE",
+  "completed": "2026-10-10",
   "note": "Records the AI configuration actually used for this exercise. No credentials are stored here. Categories that were not used are marked not-used rather than filled with invented components.",
   "categories": {
     "development_tools_and_models": {
       "status": "used",
       "files": ["ai-workflow/README.md", "notes/llm-usage.md"],
-      "notes": "Claude used conversationally as the development assistant; the whole solution was generated with it, which the brief permits. No IDE plugin or agent framework was involved."
+      "notes": "Claude on the web (claude.ai) with Claude Opus 5 and Claude Sonnet 5 chosen per task, and Claude Code (VS Code extension 2.1.294) with Claude Opus 5.5. The brief permits generating the whole solution; what was generated and what the candidate did is recorded in notes/llm-usage.md."
     },
     "plugins_and_extensions": {
-      "status": "not-used",
+      "status": "used",
       "files": [],
-      "notes": "No editor plugins or browser extensions affected this exercise."
+      "notes": "Claude Code VS Code extension 2.1.294, default configuration. No other editor plugins or browser extensions affected this exercise."
     },
     "application_models_and_parameters": {
       "status": "used",
       "files": ["app/config.py", "app/model_client.py"],
-      "notes": "Anthropic Messages API. Model id, temperature (0), max_tokens (1024) and the live/replay/stub switch are all in app/config.py and overridable by environment variable."
+      "notes": "Anthropic Messages API, claude-sonnet-4-5 (end-of-life 2026-11-30; replay unaffected). temperature 0 (sent with extra_body because anthropic 1.x removed it from the create() signature), max_tokens 1024. Mode switch live/replay/stub in app/config.py, overridable by environment variable."
     },
     "skills": {
-      "status": "not-used",
+      "status": "used",
       "files": [],
-      "notes": "The starter pack's generate-assignment-data skill was read but not installed or run; fixtures in data/additions.json were hand-written so each addition could be tied to a specific check. No custom skill was created: none was needed, and the brief states that a large collection of skills is not evidence of maturity."
+      "notes": "Claude Code's bundled claude-api skill was loaded once, unmodified, to confirm the anthropic 1.x SDK change before fixing app/model_client.py. It ships with the extension and is not a repository file. The starter pack's generate-assignment-data skill was read but not installed or run. No custom skill was created."
     },
     "agent_instructions_and_subagents": {
       "status": "not-used",
       "files": [],
-      "notes": "No CLAUDE.md, agent definition or subagent was used. Development was a single conversational session."
+      "notes": "No CLAUDE.md, project agent instructions or subagent definitions."
     },
     "hooks_and_scripts": {
       "status": "not-used",
@@ -37,30 +37,63 @@
     "prompts_and_rules": {
       "status": "used",
       "files": ["app/drafting.py"],
-      "notes": "The application's system prompt and user-prompt builder live in app/drafting.py as module constants, in version control rather than in a separate prompt store. Instructions sit in the system prompt; document text is passed in the user message inside <passage> tags, so document content is data rather than instruction."
+      "notes": "The application's system prompt and user-prompt builder live in app/drafting.py as module constants, in version control. Instructions sit in the system prompt; document text is passed in the user message inside <passage> tags, so document content is data rather than instruction."
     },
     "tool_and_mcp_settings": {
       "status": "not-used",
       "files": [],
-      "notes": "No MCP servers or tool integrations. The application makes a single plain Messages API call per question and uses no tool calling."
+      "notes": "No MCP servers or tool integrations were used for this exercise. The application makes a single plain Messages API call per question and uses no tool calling."
     },
     "permissions_and_environment_names": {
       "status": "used",
       "files": ["ai-workflow/.env.example", ".gitignore"],
-      "notes": "MODEL_API_KEY is the only secret. It is read from the environment, never written to disk, and never logged. .gitignore excludes .env and the SQLite database."
+      "notes": "MODEL_API_KEY is the only secret. It is read from the environment, never written to disk, and never logged; cache/ and checks/ were searched for the key prefix before committing. Claude Code permissions were left at the extension defaults (each command approved when prompted). .gitignore excludes .env and the SQLite database."
     }
   },
   "configuration_records": [
     {
-      "name": "Development assistant",
+      "name": "Claude on the web",
       "category": "development_tools_and_models",
-      "purpose": "Generated the fixtures, application code, checks and documentation.",
-      "original_path_or_scope": "conversational session, outside the repository",
+      "purpose": "Design discussion, fixture additions, first version of the code and documentation.",
+      "original_path_or_scope": "claude.ai account, outside the repository",
       "saved_path": "notes/llm-usage.md",
-      "version_or_commit": "claude-opus-5",
-      "used_during": "the whole exercise",
+      "version_or_commit": "Claude Opus 5 and Claude Sonnet 5; the web app exposes no version",
+      "used_during": "fixtures, application build, first documentation (commits 77180e4 to 88f1a51)",
+      "status": "not-exportable",
+      "redactions": ["chat transcripts not exported; the brief does not require them"]
+    },
+    {
+      "name": "Claude Code",
+      "category": "development_tools_and_models",
+      "purpose": "Running the project, the live model run, debugging, the final review against the brief, failure-handling checks, documentation updates.",
+      "original_path_or_scope": "VS Code extension, user level",
+      "saved_path": "notes/llm-usage.md",
+      "version_or_commit": "anthropic.claude-code 2.1.294; Claude Opus 5.5 (setting model: opus)",
+      "used_during": "final live run, verification and submission preparation",
       "status": "used",
-      "redactions": ["full chat transcript not exported; the brief does not require it"]
+      "redactions": []
+    },
+    {
+      "name": "Claude Code user settings",
+      "category": "development_tools_and_models",
+      "purpose": "Default model (opus) and always-on extended thinking for the development assistant.",
+      "original_path_or_scope": "~/.claude/settings.json",
+      "saved_path": "ai-workflow/claude-code/user-settings.sanitized.json",
+      "version_or_commit": "as of 2026-10-10",
+      "used_during": "every Claude Code session",
+      "status": "redacted",
+      "redactions": ["agentPushNotifEnabled omitted: a desktop notification preference unrelated to the exercise"]
+    },
+    {
+      "name": "claude-api skill (bundled)",
+      "category": "skills",
+      "purpose": "Reference for the Anthropic SDK; used to confirm that anthropic 1.x removed temperature from messages.create().",
+      "original_path_or_scope": "bundled with the Claude Code extension",
+      "saved_path": "",
+      "version_or_commit": "bundled with anthropic.claude-code 2.1.294",
+      "used_during": "fixing app/model_client.py after the first live run",
+      "status": "default",
+      "redactions": []
     },
     {
       "name": "Application model configuration",
@@ -79,7 +112,7 @@
       "purpose": "Restricts the model to the supplied passages, requires verbatim excerpts, and defines the JSON response shape.",
       "original_path_or_scope": "app/drafting.py :: SYSTEM_PROMPT",
       "saved_path": "app/drafting.py",
-      "version_or_commit": "see git history for earlier wordings",
+      "version_or_commit": "unchanged since commit 7c8af1c; see git history",
       "used_during": "every draft",
       "status": "used",
       "redactions": []
@@ -90,7 +123,7 @@
       "purpose": "Records every live response so a reviewer can replay the run without an API key.",
       "original_path_or_scope": "cache/",
       "saved_path": "cache/",
-      "version_or_commit": "keyed by sha256(model id, temperature, max tokens, system prompt, user prompt)",
+      "version_or_commit": "12 responses recorded 2026-10-10; keyed by sha256(model id, temperature, max tokens, system prompt, user prompt)",
       "used_during": "recorded in live mode, served in replay mode",
       "status": "used",
       "redactions": []

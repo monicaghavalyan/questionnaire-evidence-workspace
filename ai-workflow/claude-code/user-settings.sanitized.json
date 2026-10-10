@@ -1,0 +1,8 @@
+{
+  "_source": "~/.claude/settings.json (user-level Claude Code settings), sanitized copy",
+  "_omitted": [
+    "agentPushNotifEnabled: a desktop notification preference, unrelated to this exercise"
+  ],
+  "model": "opus",
+  "alwaysThinkingEnabled": true
+}

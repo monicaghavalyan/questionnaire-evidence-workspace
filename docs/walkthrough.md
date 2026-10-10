@@ -1,112 +1,112 @@
 # Walkthrough — Questionnaire Evidence & Review Workspace
 
-Written walkthrough, which the brief accepts in place of a recording. Roughly four minutes
-to read aloud.
-
----
-
 ## The problem
 
-A sales team answers buyer questionnaires from the company's own documents. Two things go
-wrong when a language model does this unsupervised.
+A sales team answers buyer questionnaires using the company's own documents. A language
+model working alone makes two kinds of mistake.
 
 It answers questions the documents do not cover. Asked *"Is JSON export available?"* when
-nothing anywhere mentions JSON, a model will usually say yes or no. Both are inventions —
-the honest answer is that nobody knows, and a human has to find out.
+no document mentions JSON, a model will usually say yes or no. Either answer is made up.
+The correct answer is "unknown", and a person has to find out.
 
-It answers from text that has been replaced. The documents contain `EXPORT-v1`, saying CSV
-export is available on every plan, and `EXPORT-v2`, which explicitly replaces it and limits
-CSV export to paid plans. Answering from the old one tells a buyer something untrue.
+It answers from text that has been replaced. The documents contain `EXPORT-v1`, which says
+CSV export is available on every plan, and `EXPORT-v2`, which replaces it and limits CSV
+export to paid plans. An answer based on the old document tells a buyer something untrue.
 
-So the interesting part of this task is not generating text. It is deciding what counts as
-evidence, and proving each answer against it.
+So the main work is not generating text. It is deciding what counts as evidence and checking
+each answer against it.
 
-## The shape of the solution
+## How the solution works
 
-Five steps per question: reuse check, model draft, evidence validation, persist, review.
+Each question goes through five steps: reuse check, model draft, evidence validation,
+saving, and review.
 
-The model does one job — read the passages, propose an answer, cite the passages it used and
-quote from them. Everything else is deterministic code, because everything else can be.
+The model has one job: read the passages, propose an answer, and cite and quote the
+passages it used. Everything else is ordinary code.
 
-**Authority is resolved before the model sees anything.** A document is authoritative when
-no other document declares `supersedes` pointing at it. That is a graph traversal, so
-`app/loader.py` does it and stores the result. The model receives passages already tagged
+**Which document is current is decided before the model sees anything.** A document is
+current when no other document lists it in its `supersedes` field. `app/loader.py` works
+this out when the data is loaded, and the model receives each passage already labelled
 `authority="authoritative"` or `authority="superseded"`.
 
-Dates play no part, deliberately. In the supplied seed, four current documents share the
-date `2026-08-01`, and the `RETENTION-v2` document I added is authoritative despite being
-older than several of them. Sorting by date gets both wrong. The rules say authority comes
-from the `supersedes` field, and that is the only thing used.
+Dates are not used for this. In the supplied data, four current documents share the date
+`2026-08-01`, and the `RETENTION-v2` document I added is current even though it is older
+than several others. Sorting by date would get both cases wrong. The rules say only the
+`supersedes` field decides, so that is all the code uses.
 
 ## Checking the model's work
 
-Nothing the model says about its own evidence is taken at face value. Five checks in
-`app/validation.py`:
+The model's answer and citations are checked in code, in `app/validation.py`:
 
-1. **Existence** — every cited passage id is real.
-2. **Authority** — every citation comes from an authoritative document.
-3. **Verbatim** — every quoted excerpt literally occurs in the passage it is attributed to.
-   If the model paraphrased inside a quotation, the citation is rejected.
-4. **Coverage** — the cited passages lexically cover the question's content words.
-5. **Shape** — an "answered" verdict has answer text and at least one surviving citation.
+1. **Existence:** every cited passage id is real.
+2. **Authority:** every citation comes from a current document, and any conflict the model
+   reports is with a superseded passage. If two *current* documents disagree, no
+   `supersedes` field settles it, so the question goes to a reviewer.
+3. **Verbatim:** every quoted excerpt appears word for word in the passage it is attributed
+   to. If the model paraphrased inside a quotation, the citation is rejected.
+4. **Coverage:** the cited passages contain the question's content words.
+5. **Shape:** an "answered" result has answer text and at least one citation that passed.
 
-Any failure downgrades the answer to `unresolved` and routes it to the topic owner from the
-supplied mapping. Downgrading is one-way: validation can turn an answer into a review item,
-never the reverse.
+If any check fails, the answer becomes `unresolved` and is routed to the topic owner from
+the supplied mapping. Validation can only move an answer to review; it never turns an
+unresolved answer into an answered one.
 
-Check four is the one that does the real work here. For *"Is JSON export available?"* the
-word `json` appears in no passage at all, so the topic is undocumented. For *"Can free-plan
-users invite team members?"* the words `free` and `plan` do exist in the corpus but not in
-the cited passage about invites, so the answer would rest on partial evidence. Both are
-routed for review rather than answered.
+The coverage check catches the main risk. For *"Is JSON export available?"* the word `json`
+appears in no passage, so the topic is undocumented. For *"Can free-plan users invite team
+members?"* the words `free` and `plan` appear in the documents, but not in the passage about
+invites, so the answer would only be partly supported. Both go to review.
 
-That check is lexical, and I want to be direct about the cost. Ask *"In which currency are
-subscriptions billed?"* and it routes for review, because `currency` appears nowhere even
-though `BILLING-v1` says USD. That is a false unresolved. I took the trade knowingly: for a
-buyer-facing questionnaire, an over-cautious reviewer queue is cheaper than a confident
-wrong answer. The fix is embeddings or an entailment check, with the lexical test kept as a
-cheap pre-filter. I did not add a synonym list, because inventing product vocabulary is
-exactly what the exercise rules forbid.
+The coverage check compares words, not meaning, and that has a cost. *"In which currency are
+subscriptions billed?"* would go to review, because the word `currency` appears nowhere,
+even though `BILLING-v1` says USD. I accepted this: for answers that go to buyers, an extra
+item in the review queue costs less than a wrong answer. A better version would compare
+meaning, for example with embeddings, and keep the word check as a quick first filter. I
+did not add a synonym list, because the exercise rules forbid inventing product vocabulary.
 
-## Approval, reuse and staleness
+## Approval, reuse and source changes
 
-Only an approved answer may be reused, and an edit alone is not an approval — a reviewer's
-correction stays a `draft` until somebody signs it off.
+Only an approved answer can be reused. An edit on its own is not an approval: a reviewer's
+correction stays a `draft` until someone approves it.
 
-Approval stores the answer **and a snapshot of the version of every document it cites**.
-That snapshot is what makes staleness detectable later: compare it with the live versions,
-and any difference means the ground underneath the approval has moved. The answer becomes
-`needs_review` and stops being reusable, which is checked on every queue load rather than
-only when someone happens to open that row.
+When an answer is approved, the app saves the answer **and the version of every document it
+cites**. Later, it compares those versions with the current ones. If any has changed, the
+answer becomes `needs_review` and is no longer reused. This check runs every time the queue
+loads, not only when someone opens that question.
 
-## The mistake I made, and how I found it
+## What the real model run caught
 
-The staleness check originally compared version numbers only. I wrote a script with two
-modes: `--mode bump`, which raises `EXPORT-v2` from version 2 to 3, and `--mode supersede`,
-which inserts an `EXPORT-v3` that replaces it. The bump mode worked. I ran the supersede
-mode rather than assuming it worked too, and it reported `"flagged_needs_review": []`.
+The code was generated with AI assistance. Until the end, every check ran against an
+offline keyword stub, so it could be developed without an API key, and all five reference
+cases passed that way. The first run against the real API crashed immediately:
+`Messages.create() got an unexpected keyword argument 'temperature'`. The generated code was
+written for an older version of the Anthropic SDK, and the stub never reached that line.
 
-It was right by its own logic and wrong about the world: inserting `EXPORT-v3` leaves
-`EXPORT-v2` at version 2, so no version changed — but the approved answer was now resting on
-a passage that rule 2 forbids answering from.
+Two things were fixed. `temperature` is now sent in the request body, which the API still
+accepts for this model. And API errors now become visible `error` rows instead of
+exceptions, because the crash showed that one failure would have stopped the whole batch.
 
-The fix was `cited_authority_lost()` alongside the version comparison, so an approval goes
-stale for either reason. The supplied rules only mention version changes, so I recorded the
-decision as an explicit assumption in the README rather than quietly widening the rule.
+The next attempt tested that second fix with a real failure: the account had no API credit,
+and all thirteen questions came back as `error` with the provider's message while the batch
+still finished. After credit was added, the run recorded twelve real responses, and the five
+reference cases passed again when replayed from them.
 
-That is the part of this exercise I would most want to be judged on. The code was internally
-consistent and passed its own checks; what caught it was running the less obvious path and
-reading the output.
+The lesson: checks against the offline stub did not test the real integration. A live call
+should come early in development, not at the end.
+
+A second problem was found earlier, while testing source changes. The source-change check
+compared version numbers only. Adding an `EXPORT-v3` that supersedes `EXPORT-v2`, while
+`EXPORT-v2` stays at version 2, was not detected, even though the approved answer now relied
+on a passage rule 2 forbids. `cited_authority_lost()` fixed it. The rules only mention
+version changes, so this decision is recorded as an assumption in the README.
 
 ## What I did not do
 
-No embeddings, no PDF parsing, no CRM integration, no cloud deployment, no agent framework.
-The brief lists those as optional and says optional work does not compensate for missing
-required functionality, so the required flow and its checks came first.
+No embeddings, PDF parsing, CRM integration, cloud deployment or agent framework. The brief
+lists these as optional and says optional work does not make up for missing required
+functionality, so the required flow and its checks came first.
 
-The committed check report was produced with the offline stub, not a real model. It shows
-the pipeline and the review logic behave as I derived by hand; it shows nothing about model
-quality, and I have said so everywhere it appears.
+The committed check reports replay twelve real responses from `claude-sonnet-4-5`. The
+failure-handling report uses hand-written failing responses and says so in its header.
 
-Five fictional documents and thirteen questions are a demonstration set. They are evidence
-that the rules are implemented, not evidence of accuracy on other data.
+Seven short fictional documents and thirteen questions are a small demonstration set. They
+show that the rules are implemented, not how accurate the system would be on other data.
