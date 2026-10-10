@@ -36,7 +36,7 @@ API_KEY_ENV = "MODEL_API_KEY"
 STRICT_COVERAGE = os.environ.get("STRICT_COVERAGE", "1") not in ("0", "false", "False")
 
 # Generic English function words and question-form modifiers ("how long", "how often").
-# Deliberately contains no product or domain term, so this list encodes no business policy.
+# Contains no product or domain terms, so this list adds no business rules.
 STOPWORDS = frozenset(
     """
     a about an and any are as at be been being by can could do does did for from

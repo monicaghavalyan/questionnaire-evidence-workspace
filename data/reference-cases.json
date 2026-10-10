@@ -101,8 +101,8 @@
       "rule": "Rule 3 - mark an approved answer for review if a referenced document version changes",
       "kind": "scenario",
       "steps": [
-        "Start from the approved Q1 answer created in RC-4, whose source snapshot is {EXPORT-v2: 2}.",
-        "Run scripts/bump_source_version.py --mode bump, which raises EXPORT-v2 from version 2 to version 3 without changing its text.",
+        "On a fresh database, approve the corrected Q1 answer as in RC-4; its source snapshot is {EXPORT-v2: 2}. Also approve Q12 as a control.",
+        "Raise EXPORT-v2 from version 2 to version 3 without changing its text (the same change scripts/bump_source_version.py --mode bump makes).",
         "Re-open the queue. The Q1 answer must be 'needs_review' and must not be reused for Q13.",
         "Reload the application (new database connection) and confirm the needs_review state and the stored evidence are still there.",
         "Confirm an approved answer whose sources did NOT change is still 'approved' after the bump."

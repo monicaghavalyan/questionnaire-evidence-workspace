@@ -1,21 +1,22 @@
-"""Evidence validation. This is where the model stops being trusted.
+"""Evidence validation: code checks on every model draft.
 
-Nothing the model says about its own evidence is taken at face value. Each draft goes
-through five checks, all of them deterministic:
+The model's citations and quotes are not trusted as given. Each draft goes through five
+checks, all of them deterministic:
 
   C1 existence   every cited passage id is a real passage
-  C2 authority   every cited passage belongs to an authoritative document (rule 2)
+  C2 authority   every cited passage belongs to an authoritative document, and any conflict
+                 the model reports is with a superseded passage, not another current one (rule 2)
   C3 verbatim    every quoted excerpt literally occurs in the passage it is attributed to
   C4 coverage    the cited passages lexically cover the question's content words (rule 1)
   C5 shape       an "answered" verdict actually has answer text and at least one citation
 
-Any failure downgrades the answer to "unresolved" and routes it to the topic owner from
-the supplied mapping (rule 4). Downgrading is one-way: the validator can turn an answer
-into a review item, never the reverse.
+Any failure makes the answer "unresolved" and routes it to the topic owner from the
+supplied mapping (rule 4). The validator can only move an answer to review; it never turns
+an unresolved answer into an answered one.
 
-C4 is the guard that catches the failure this task is really about: a confident answer
-built on a passage that does not address the question. It is lexical, which makes it blunt
-in both directions - see the limitations section of README.md.
+C4 catches an answer built on a passage that does not address the question. It compares
+words, not meaning, so it can be wrong in both directions - see the limitations section of
+README.md.
 """
 
 from __future__ import annotations
@@ -126,6 +127,23 @@ def validate(
             }
         )
 
+    # A conflict with a superseded passage is resolved by metadata. A conflict with another
+    # authoritative passage is not: no supersedes link says which one wins, so the question
+    # is left for a reviewer instead of picking a side.
+    current_conflicts = [pid for pid in known_conflicting if passages[pid]["is_authoritative"]]
+    checks["conflicts_resolved_by_metadata"] = not current_conflicts
+    if current_conflicts:
+        warnings.append(
+            {
+                "code": "unresolved_conflict",
+                "message": (
+                    "The model reported a conflict with a passage from a current document. "
+                    "No supersedes field decides between them, so a reviewer must."
+                ),
+                "passage_ids": current_conflicts,
+            }
+        )
+
     authoritative_cited = [pid for pid in known_cited if passages[pid]["is_authoritative"]]
 
     # C3 verbatim --------------------------------------------------------------
@@ -220,6 +238,7 @@ def validate(
     blocking = {
         "citation_not_found",
         "citation_superseded",
+        "unresolved_conflict",
         "excerpt_missing",
         "excerpt_not_verbatim",
         "empty_answer",
@@ -306,6 +325,10 @@ def _build_reason(
         )
     if "citation_superseded" in triggered:
         parts.append("The proposed answer relied on an explicitly superseded passage.")
+    if "unresolved_conflict" in triggered:
+        parts.append(
+            "Current documents disagree and no supersedes field decides between them."
+        )
     if "excerpt_not_verbatim" in triggered or "excerpt_missing" in triggered:
         parts.append("A quoted excerpt could not be verified against its passage.")
     if "citation_not_found" in triggered:

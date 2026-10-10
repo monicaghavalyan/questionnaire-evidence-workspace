@@ -149,7 +149,8 @@ def get_question(conn: sqlite3.Connection, question_id: str) -> sqlite3.Row | No
 
 
 def all_questions(conn: sqlite3.Connection) -> list[sqlite3.Row]:
-    return conn.execute("SELECT * FROM questions ORDER BY id").fetchall()
+    # Shorter ids first, so Q2 comes before Q10 rather than sorting as text.
+    return conn.execute("SELECT * FROM questions ORDER BY length(id), id").fetchall()
 
 
 def owner_for_topic(conn: sqlite3.Connection, topic: str) -> str | None:
@@ -177,16 +178,18 @@ def get_answer(conn: sqlite3.Connection, question_id: str) -> dict[str, Any] | N
 
 
 def all_answers(conn: sqlite3.Connection) -> list[dict[str, Any]]:
-    rows = conn.execute("SELECT * FROM answers ORDER BY question_id").fetchall()
+    rows = conn.execute(
+        "SELECT * FROM answers ORDER BY length(question_id), question_id"
+    ).fetchall()
     return [_decode(r) for r in rows]
 
 
 def find_approved_by_text(
     conn: sqlite3.Connection, question_text: str, exclude_question_id: str | None = None
 ) -> dict[str, Any] | None:
-    """Exact-text lookup of an APPROVED answer. The brief allows exact matching.
+    """Exact-text lookup of an APPROVED answer.
 
-    needs_review rows are deliberately excluded: rule 3 forbids reusing an answer whose
+    needs_review rows are excluded: rule 3 forbids reusing an answer whose
     source version has changed until a reviewer looks at it again.
     """
     sql = "SELECT * FROM answers WHERE question_text = ? AND status = 'approved'"

@@ -137,6 +137,13 @@ def approve(
             f"{question_id} is unresolved: give it an answer before approving, so an "
             "approval is never recorded against evidence that failed its checks"
         )
+    lost = cited_authority_lost(conn, answer.get("cited_passage_ids") or [])
+    if lost:
+        raise ValueError(
+            f"{question_id} cites evidence that is no longer authoritative "
+            f"({'; '.join(item['problem'] for item in lost)}). Re-draft it from the current "
+            "documents before approving."
+        )
 
     snapshot = snapshot_source_versions(conn, answer.get("cited_passage_ids") or [])
     timestamp = now()
@@ -146,6 +153,11 @@ def approve(
             "question_id": question_id,
             "status": "approved",
             "source_versions": snapshot,
+            # The reviewer has looked again and the snapshot is fresh, so an earlier
+            # source-change warning no longer describes this approval.
+            "warnings": [
+                w for w in answer.get("warnings") or [] if w["code"] != "source_version_changed"
+            ],
             "approved_at": timestamp,
             "approved_by": approved_by,
             "updated_at": timestamp,
@@ -202,7 +214,9 @@ def refresh_source_change_flags(conn: sqlite3.Connection) -> list[dict[str, Any]
         changed = stale["version_changed"]
         lost = stale["authority_lost"]
         timestamp = now()
-        warnings = list(answer.get("warnings") or [])
+        warnings = [
+            w for w in answer.get("warnings") or [] if w["code"] != "source_version_changed"
+        ]
         details = []
         if changed:
             details.append(
@@ -250,7 +264,7 @@ def find_reusable(
 ) -> dict[str, Any] | None:
     """An approved answer for the identical question text, still backed by its sources.
 
-    Exact matching, which the brief allows. needs_review and draft rows are never returned:
+    Exact text matching. needs_review and draft rows are never returned:
     rule 3 permits reuse of approved answers only.
     """
     refresh_source_change_flags(conn)

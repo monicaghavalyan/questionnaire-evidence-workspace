@@ -1,6 +1,6 @@
 """Prompt construction and response parsing.
 
-Two deliberate choices, both defensible in review:
+Two design choices:
 
 1. Instructions live in the system prompt; document text lives in the user message inside
    <passage> tags. Document content is data, not instruction. If a passage ever contained
@@ -9,7 +9,7 @@ Two deliberate choices, both defensible in review:
 
 2. The model is told which passages are authoritative and which are superseded. It is not
    asked to work that out. Authority is decided in app/loader.py from the supersedes field,
-   because that rule is deterministic and does not belong in a probabilistic component.
+   because code can apply that rule exactly.
 """
 
 from __future__ import annotations
@@ -82,7 +82,7 @@ class ParseError(ValueError):
 
 
 def parse_response(raw: str) -> dict[str, Any]:
-    """Parse the model's JSON, tolerating a code fence but nothing more inventive.
+    """Parse the model's JSON. A ```json code fence around it is accepted; nothing else is.
 
     A parse failure is raised, not patched. The pipeline turns it into a visible error
     status rather than guessing what the model meant.
@@ -136,6 +136,6 @@ def parse_response(raw: str) -> dict[str, Any]:
 
 
 def prompt_for_question(conn: sqlite3.Connection, question_text: str) -> tuple[str, str]:
-    """The whole corpus fits comfortably in one request, which the brief allows."""
+    """The whole corpus is small enough to send in one request."""
     passages = storage.all_passages(conn)
     return SYSTEM_PROMPT, build_user_prompt(question_text, passages)

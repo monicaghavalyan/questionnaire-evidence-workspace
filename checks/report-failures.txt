@@ -1,0 +1,43 @@
+======================================================================================
+FAILURE-HANDLING CHECKS
+*** SIMULATED: the failing responses below are hand-written, not model output ***
+other questions : replayed from recorded real responses in cache/
+run at          : 2026-10-10T19:36:36Z
+======================================================================================
+
+[PASS] F-1  API failure on one question does not stop the batch  (Q3)
+       ok   status
+       ok   warning raised
+       ok   no answer text presented
+       ok   other questions still processed
+       ok   no other question errored
+
+[PASS] F-2  Output that is not JSON is routed for review, not guessed at  (Q5)
+       ok   status
+       ok   warning raised
+       ok   no answer text presented
+
+[PASS] F-3  A citation to a passage that does not exist is rejected  (Q5)
+       ok   status
+       ok   warning raised
+       ok   no answer text presented
+
+[PASS] F-4  A paraphrased 'quotation' is rejected  (Q5)
+       ok   status
+       ok   warning raised
+       ok   no answer text presented
+
+[PASS] F-5  An answer built on a superseded passage is rejected  (Q1)
+       ok   status
+       ok   warning raised
+       ok   no answer text presented
+
+[PASS] F-6  A conflict between two current documents is left for review  (Q3)
+       ok   status
+       ok   warning raised
+       ok   no answer text presented
+
+======================================================================================
+6/6 failure-handling checks passed
+======================================================================================
+report written to checks/report-failures.json

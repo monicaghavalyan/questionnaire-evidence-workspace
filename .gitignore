@@ -8,7 +8,7 @@
 *.sqlite-wal
 *.sqlite-shm
 
-# NOTE: cache/ is deliberately NOT ignored. The recorded model responses are what make
+# NOTE: cache/ is NOT ignored. The recorded model responses are what make
 # MODEL_MODE=replay work for a reviewer with no API key, so they are part of the submission.
 
 __pycache__/

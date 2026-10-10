@@ -8,11 +8,19 @@ approved wording is what should be served.
 
 Model and transport failures are turned into a visible "error" row rather than an exception
 that stops the batch, so one bad question never hides the rest of the queue.
+
+Draft the whole questionnaire from the command line and print what happened:
+
+    MODEL_MODE=live python -m app.pipeline --force    # real calls, recorded to cache/
+    MODEL_MODE=replay python -m app.pipeline --force  # recorded responses, no API key
 """
 
 from __future__ import annotations
 
+import argparse
+import json
 import sqlite3
+import sys
 from typing import Any
 
 from app import config, drafting, model_client, review, storage, validation
@@ -33,10 +41,10 @@ def draft_question(
     timestamp = review.now()
     existing = storage.get_answer(conn, question_id)
 
-    # Don't silently overwrite reviewer work.
-    if existing and not force and existing["status"] in ("approved", "needs_review"):
-        return existing
-    if existing and not force and existing["origin"] == "human_edit":
+    # Without force, only questions with no answer yet, or whose last attempt failed, are
+    # drafted. This never overwrites reviewer work and never pays for a call whose result
+    # is already stored.
+    if existing and not force and existing["status"] != "error":
         return existing
 
     base = {
@@ -237,3 +245,27 @@ def queue_summary(conn: sqlite3.Connection) -> dict[str, Any]:
         "unresolved_by_owner": by_owner,
         "warning_counts": warning_counts,
     }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Draft every question and print a summary")
+    parser.add_argument(
+        "--force", action="store_true", help="re-draft rows that already have an answer"
+    )
+    args = parser.parse_args()
+
+    conn = storage.connect()
+    results = draft_all(conn, force=args.force)
+    summary = queue_summary(conn)
+    print(f"model mode: {config.MODEL_MODE}   model id: {config.MODEL_ID}")
+    print(json.dumps(summary["counts"], indent=2))
+
+    # Make a run where every call failed obvious from the exit code and the output.
+    errors = [r for r in results if r["status"] == "error"]
+    for r in errors:
+        print(f"{r['question_id']}: {r['reason']}", file=sys.stderr)
+    return 1 if errors else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -69,7 +69,5 @@
       "text": "Can free-plan users export CSV?"
     }
   ],
-  "owners": {
-    "retention": "Product reviewer"
-  }
+  "_owners_note": "No owner is added for the new 'retention' topic. Rule 4 says to use the supplied topic-to-reviewer mapping, and it has no entry for retention. The loader reports the topic under missing_owner_topics, and an unresolved retention question would carry an owner_not_mapped warning instead of an invented reviewer."
 }

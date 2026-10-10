@@ -20,7 +20,7 @@ import streamlit as st
 # `from app import ...` imports below would fail without this.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app import config, loader, model_client, pipeline, review, storage  # noqa: E402
+from app import config, loader, model_client, pipeline, review, storage, validation  # noqa: E402
 
 STATUS_LABELS = {
     "draft": "Draft - awaiting review",
@@ -115,7 +115,8 @@ def render_evidence(conn: sqlite3.Connection, answer: dict[str, Any]) -> None:
             st.markdown(f"> {p['text']}")
             quoted = excerpts.get(pid)
             if quoted:
-                verified = quoted.strip().casefold() in p["text"].casefold()
+                # Same test the validator applied, so the label can never disagree with it.
+                verified = validation.excerpt_is_verbatim(quoted, p["text"])
                 mark = ":green[verified verbatim]" if verified else ":red[NOT verbatim]"
                 st.caption(f"Model quoted: “{quoted}” - {mark}")
     else:

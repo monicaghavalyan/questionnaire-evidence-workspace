@@ -1,0 +1,183 @@
+{
+  "simulated": true,
+  "note": "Failing responses are hand-written and injected; they are not model output.",
+  "run_at": "2026-10-10T19:36:36Z",
+  "passed": 6,
+  "total": 6,
+  "cases": [
+    {
+      "case": "F-1",
+      "title": "API failure on one question does not stop the batch",
+      "question_id": "Q3",
+      "simulated": true,
+      "passed": true,
+      "assertions": [
+        {
+          "assertion": "status",
+          "expected": "error",
+          "observed": "error",
+          "passed": true
+        },
+        {
+          "assertion": "warning raised",
+          "expected": "model_unavailable",
+          "observed": "model_unavailable",
+          "passed": true
+        },
+        {
+          "assertion": "no answer text presented",
+          "expected": "",
+          "observed": "",
+          "passed": true
+        },
+        {
+          "assertion": "other questions still processed",
+          "expected": 12,
+          "observed": 12,
+          "passed": true
+        },
+        {
+          "assertion": "no other question errored",
+          "expected": [],
+          "observed": [],
+          "passed": true
+        }
+      ]
+    },
+    {
+      "case": "F-2",
+      "title": "Output that is not JSON is routed for review, not guessed at",
+      "question_id": "Q5",
+      "simulated": true,
+      "passed": true,
+      "assertions": [
+        {
+          "assertion": "status",
+          "expected": "unresolved",
+          "observed": "unresolved",
+          "passed": true
+        },
+        {
+          "assertion": "warning raised",
+          "expected": "invalid_model_output",
+          "observed": "invalid_model_output",
+          "passed": true
+        },
+        {
+          "assertion": "no answer text presented",
+          "expected": "",
+          "observed": "",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "case": "F-3",
+      "title": "A citation to a passage that does not exist is rejected",
+      "question_id": "Q5",
+      "simulated": true,
+      "passed": true,
+      "assertions": [
+        {
+          "assertion": "status",
+          "expected": "unresolved",
+          "observed": "unresolved",
+          "passed": true
+        },
+        {
+          "assertion": "warning raised",
+          "expected": "citation_not_found",
+          "observed": "citation_not_found",
+          "passed": true
+        },
+        {
+          "assertion": "no answer text presented",
+          "expected": "",
+          "observed": "",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "case": "F-4",
+      "title": "A paraphrased 'quotation' is rejected",
+      "question_id": "Q5",
+      "simulated": true,
+      "passed": true,
+      "assertions": [
+        {
+          "assertion": "status",
+          "expected": "unresolved",
+          "observed": "unresolved",
+          "passed": true
+        },
+        {
+          "assertion": "warning raised",
+          "expected": "excerpt_not_verbatim",
+          "observed": "excerpt_not_verbatim",
+          "passed": true
+        },
+        {
+          "assertion": "no answer text presented",
+          "expected": "",
+          "observed": "",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "case": "F-5",
+      "title": "An answer built on a superseded passage is rejected",
+      "question_id": "Q1",
+      "simulated": true,
+      "passed": true,
+      "assertions": [
+        {
+          "assertion": "status",
+          "expected": "unresolved",
+          "observed": "unresolved",
+          "passed": true
+        },
+        {
+          "assertion": "warning raised",
+          "expected": "citation_superseded",
+          "observed": "citation_superseded",
+          "passed": true
+        },
+        {
+          "assertion": "no answer text presented",
+          "expected": "",
+          "observed": "",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "case": "F-6",
+      "title": "A conflict between two current documents is left for review",
+      "question_id": "Q3",
+      "simulated": true,
+      "passed": true,
+      "assertions": [
+        {
+          "assertion": "status",
+          "expected": "unresolved",
+          "observed": "unresolved",
+          "passed": true
+        },
+        {
+          "assertion": "warning raised",
+          "expected": "unresolved_conflict",
+          "observed": "unresolved_conflict",
+          "passed": true
+        },
+        {
+          "assertion": "no answer text presented",
+          "expected": "",
+          "observed": "",
+          "passed": true
+        }
+      ]
+    }
+  ]
+}
