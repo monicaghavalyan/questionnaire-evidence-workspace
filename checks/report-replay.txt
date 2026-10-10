@@ -1,10 +1,10 @@
 ======================================================================================
 REFERENCE CASE RESULTS
-model mode      : stub   *** STUB: not a real model run ***
-model id        : stub-keyword-overlap
+model mode      : replay
+model id        : claude-sonnet-4-5
 strict coverage : True
-recorded responses in cache: 0
-run at          : 2026-10-10T14:26:53Z
+recorded responses in cache: 12
+run at          : 2026-10-10T19:36:36Z
 ======================================================================================
 
 [PASS] RC-1  A supported question is answered with a citation that exists and supports it
@@ -76,4 +76,4 @@ run at          : 2026-10-10T14:26:53Z
 ======================================================================================
 5/5 reference cases passed
 ======================================================================================
-report written to checks/report-stub.json
+report written to checks/report-replay.json

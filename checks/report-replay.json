@@ -1,10 +1,10 @@
 {
-  "run_at": "2026-10-10T14:26:53Z",
-  "model_mode": "stub",
-  "model_id": "stub-keyword-overlap",
-  "stub_warning": "Results produced with the offline stub, not a real model.",
+  "run_at": "2026-10-10T19:36:36Z",
+  "model_mode": "replay",
+  "model_id": "claude-sonnet-4-5",
+  "stub_warning": null,
   "strict_coverage": true,
-  "recorded_responses": 0,
+  "recorded_responses": 12,
   "passed": 5,
   "total": 5,
   "cases": [
