@@ -1,0 +1,362 @@
+{
+  "run_at": "2026-10-10T14:26:53Z",
+  "model_mode": "stub",
+  "model_id": "stub-keyword-overlap",
+  "stub_warning": "Results produced with the offline stub, not a real model.",
+  "strict_coverage": true,
+  "recorded_responses": 0,
+  "passed": 5,
+  "total": 5,
+  "cases": [
+    {
+      "case": "RC-1",
+      "title": "A supported question is answered with a citation that exists and supports it",
+      "covers": "Minimum demonstration 1",
+      "rule": "Rule 1 - answer only from the supplied documents",
+      "passed": true,
+      "error": null,
+      "assertions": [
+        {
+          "assertion": "question text matches the fixture",
+          "expected": "When is email support available?",
+          "observed": "When is email support available?",
+          "passed": true
+        },
+        {
+          "assertion": "status is answered and awaiting review",
+          "expected": "draft",
+          "observed": "draft",
+          "passed": true
+        },
+        {
+          "assertion": "cited passage ids",
+          "expected": [
+            "SUPPORT-v1:p1"
+          ],
+          "observed": [
+            "SUPPORT-v1:p1"
+          ],
+          "passed": true
+        },
+        {
+          "assertion": "conflicting passage ids",
+          "expected": [],
+          "observed": [],
+          "passed": true
+        },
+        {
+          "assertion": "owner",
+          "expected": null,
+          "observed": null,
+          "passed": true
+        },
+        {
+          "assertion": "answer mentions the required facts",
+          "expected": "contains ['Monday', '09:00', '17:00']",
+          "observed": "all present",
+          "passed": true
+        },
+        {
+          "assertion": "all citations exist",
+          "expected": true,
+          "observed": true,
+          "passed": true
+        },
+        {
+          "assertion": "all citations current",
+          "expected": true,
+          "observed": true,
+          "passed": true
+        },
+        {
+          "assertion": "all excerpts verified",
+          "expected": true,
+          "observed": true,
+          "passed": true
+        }
+      ]
+    },
+    {
+      "case": "RC-2",
+      "title": "An undocumented capability stays unresolved and is routed, not guessed",
+      "covers": "Minimum demonstration 2",
+      "rule": "Rule 1 - an undocumented feature is unknown, not supported or unsupported; Rule 4 - owner from the supplied mapping",
+      "passed": true,
+      "error": null,
+      "assertions": [
+        {
+          "assertion": "question text matches the fixture",
+          "expected": "Is JSON export available?",
+          "observed": "Is JSON export available?",
+          "passed": true
+        },
+        {
+          "assertion": "status",
+          "expected": "unresolved",
+          "observed": "unresolved",
+          "passed": true
+        },
+        {
+          "assertion": "cited passage ids",
+          "expected": [],
+          "observed": [],
+          "passed": true
+        },
+        {
+          "assertion": "conflicting passage ids",
+          "expected": [],
+          "observed": [],
+          "passed": true
+        },
+        {
+          "assertion": "owner",
+          "expected": "Product reviewer",
+          "observed": "Product reviewer",
+          "passed": true
+        },
+        {
+          "assertion": "answer invents no capability",
+          "expected": "none of ['JSON export is available', 'JSON export is not available', 'Yes,', 'No,']",
+          "observed": "none present",
+          "passed": true
+        },
+        {
+          "assertion": "reason explains why it is unresolved",
+          "expected": "contains ['undocumented']",
+          "observed": "all present",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "case": "RC-3",
+      "title": "An explicitly superseded policy loses, and the conflict stays visible",
+      "covers": "Minimum demonstration 3",
+      "rule": "Rule 2 - authority comes only from the supersedes field, and replaced text stays available",
+      "passed": true,
+      "error": null,
+      "assertions": [
+        {
+          "assertion": "question text matches the fixture",
+          "expected": "Can free-plan users export CSV?",
+          "observed": "Can free-plan users export CSV?",
+          "passed": true
+        },
+        {
+          "assertion": "status is answered and awaiting review",
+          "expected": "draft",
+          "observed": "draft",
+          "passed": true
+        },
+        {
+          "assertion": "cited passage ids",
+          "expected": [
+            "EXPORT-v2:p1"
+          ],
+          "observed": [
+            "EXPORT-v2:p1"
+          ],
+          "passed": true
+        },
+        {
+          "assertion": "conflicting passage ids",
+          "expected": [
+            "EXPORT-v1:p1"
+          ],
+          "observed": [
+            "EXPORT-v1:p1"
+          ],
+          "passed": true
+        },
+        {
+          "assertion": "answer mentions the required facts",
+          "expected": "contains ['paid']",
+          "observed": "all present",
+          "passed": true
+        },
+        {
+          "assertion": "all citations current",
+          "expected": true,
+          "observed": true,
+          "passed": true
+        }
+      ]
+    },
+    {
+      "case": "RC-4",
+      "title": "An approved correction is reused on the same question; an unapproved edit is not",
+      "covers": "Minimum demonstration 4",
+      "rule": "Rule 3 - only an approved answer can be reused; an unapproved edit is a draft",
+      "passed": true,
+      "error": null,
+      "assertions": [
+        {
+          "assertion": "Q1 drafts with evidence",
+          "expected": "draft",
+          "observed": "draft",
+          "passed": true
+        },
+        {
+          "assertion": "an edit alone is only a draft",
+          "expected": "draft",
+          "observed": "draft",
+          "passed": true
+        },
+        {
+          "assertion": "an unapproved edit records no approval",
+          "expected": null,
+          "observed": null,
+          "passed": true
+        },
+        {
+          "assertion": "Q1 is approved",
+          "expected": "approved",
+          "observed": "approved",
+          "passed": true
+        },
+        {
+          "assertion": "approval snapshots its source versions",
+          "expected": {
+            "EXPORT-v2": 2
+          },
+          "observed": {
+            "EXPORT-v2": 2
+          },
+          "passed": true
+        },
+        {
+          "assertion": "reused answer text",
+          "expected": "No. CSV export is limited to paid plans.",
+          "observed": "No. CSV export is limited to paid plans.",
+          "passed": true
+        },
+        {
+          "assertion": "reused origin",
+          "expected": "reused_approved",
+          "observed": "reused_approved",
+          "passed": true
+        },
+        {
+          "assertion": "reused status",
+          "expected": "approved",
+          "observed": "approved",
+          "passed": true
+        },
+        {
+          "assertion": "reused sources",
+          "expected": [
+            "EXPORT-v2:p1"
+          ],
+          "observed": [
+            "EXPORT-v2:p1"
+          ],
+          "passed": true
+        },
+        {
+          "assertion": "reused answer carries the approval record",
+          "expected": true,
+          "observed": true,
+          "passed": true
+        },
+        {
+          "assertion": "reuse is attributed to Q1",
+          "expected": "Q1",
+          "observed": "Q1",
+          "passed": true
+        },
+        {
+          "assertion": "unapproved edit status",
+          "expected": "draft",
+          "observed": "draft",
+          "passed": true
+        },
+        {
+          "assertion": "unapproved edit is not offered for reuse",
+          "expected": true,
+          "observed": true,
+          "passed": true
+        },
+        {
+          "assertion": "a reuse is not counted as new answered work",
+          "expected": true,
+          "observed": true,
+          "passed": true
+        }
+      ]
+    },
+    {
+      "case": "RC-5",
+      "title": "A changed source version sends an approved answer back for review; reload preserves state",
+      "covers": "Minimum demonstration 5",
+      "rule": "Rule 3 - mark an approved answer for review if a referenced document version changes",
+      "passed": true,
+      "error": null,
+      "assertions": [
+        {
+          "assertion": "control answer starts approved",
+          "expected": "approved",
+          "observed": "approved",
+          "passed": true
+        },
+        {
+          "assertion": "the changed source is detected",
+          "expected": [
+            "Q1"
+          ],
+          "observed": [
+            "Q1"
+          ],
+          "passed": true
+        },
+        {
+          "assertion": "Q1 status after the version change",
+          "expected": "needs_review",
+          "observed": "needs_review",
+          "passed": true
+        },
+        {
+          "assertion": "the stored warning names the version change",
+          "expected": true,
+          "observed": true,
+          "passed": true
+        },
+        {
+          "assertion": "Q1 is no longer reusable",
+          "expected": false,
+          "observed": false,
+          "passed": true
+        },
+        {
+          "assertion": "Q13 does not receive the stale approved answer",
+          "expected": true,
+          "observed": true,
+          "passed": true
+        },
+        {
+          "assertion": "control answer stays approved",
+          "expected": "approved",
+          "observed": "approved",
+          "passed": true
+        },
+        {
+          "assertion": "status survives a reload",
+          "expected": "needs_review",
+          "observed": "needs_review",
+          "passed": true
+        },
+        {
+          "assertion": "evidence survives a reload",
+          "expected": true,
+          "observed": true,
+          "passed": true
+        },
+        {
+          "assertion": "the audit trail survives a reload",
+          "expected": true,
+          "observed": true,
+          "passed": true
+        }
+      ]
+    }
+  ]
+}

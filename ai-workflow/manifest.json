@@ -1,0 +1,123 @@
+{
+  "exercise": "Junior AI Engineer take-home, Alternative C - Questionnaire review",
+  "starter_pack_version": "2026-10-02",
+  "completed": "REPLACE_WITH_SUBMISSION_DATE",
+  "note": "Records the AI configuration actually used for this exercise. No credentials are stored here. Categories that were not used are marked not-used rather than filled with invented components.",
+  "categories": {
+    "development_tools_and_models": {
+      "status": "used",
+      "files": ["ai-workflow/README.md", "notes/llm-usage.md"],
+      "notes": "Claude used conversationally as the development assistant; the whole solution was generated with it, which the brief permits. No IDE plugin or agent framework was involved."
+    },
+    "plugins_and_extensions": {
+      "status": "not-used",
+      "files": [],
+      "notes": "No editor plugins or browser extensions affected this exercise."
+    },
+    "application_models_and_parameters": {
+      "status": "used",
+      "files": ["app/config.py", "app/model_client.py"],
+      "notes": "Anthropic Messages API. Model id, temperature (0), max_tokens (1024) and the live/replay/stub switch are all in app/config.py and overridable by environment variable."
+    },
+    "skills": {
+      "status": "not-used",
+      "files": [],
+      "notes": "The starter pack's generate-assignment-data skill was read but not installed or run; fixtures in data/additions.json were hand-written so each addition could be tied to a specific check. No custom skill was created: none was needed, and the brief states that a large collection of skills is not evidence of maturity."
+    },
+    "agent_instructions_and_subagents": {
+      "status": "not-used",
+      "files": [],
+      "notes": "No CLAUDE.md, agent definition or subagent was used. Development was a single conversational session."
+    },
+    "hooks_and_scripts": {
+      "status": "not-used",
+      "files": [],
+      "notes": "No hooks were configured. A reviewer therefore has no hook command to read before running anything in this repository."
+    },
+    "prompts_and_rules": {
+      "status": "used",
+      "files": ["app/drafting.py"],
+      "notes": "The application's system prompt and user-prompt builder live in app/drafting.py as module constants, in version control rather than in a separate prompt store. Instructions sit in the system prompt; document text is passed in the user message inside <passage> tags, so document content is data rather than instruction."
+    },
+    "tool_and_mcp_settings": {
+      "status": "not-used",
+      "files": [],
+      "notes": "No MCP servers or tool integrations. The application makes a single plain Messages API call per question and uses no tool calling."
+    },
+    "permissions_and_environment_names": {
+      "status": "used",
+      "files": ["ai-workflow/.env.example", ".gitignore"],
+      "notes": "MODEL_API_KEY is the only secret. It is read from the environment, never written to disk, and never logged. .gitignore excludes .env and the SQLite database."
+    }
+  },
+  "configuration_records": [
+    {
+      "name": "Development assistant",
+      "category": "development_tools_and_models",
+      "purpose": "Generated the fixtures, application code, checks and documentation.",
+      "original_path_or_scope": "conversational session, outside the repository",
+      "saved_path": "notes/llm-usage.md",
+      "version_or_commit": "claude-opus-5",
+      "used_during": "the whole exercise",
+      "status": "used",
+      "redactions": ["full chat transcript not exported; the brief does not require it"]
+    },
+    {
+      "name": "Application model configuration",
+      "category": "application_models_and_parameters",
+      "purpose": "Drafts an answer and its citations for one question.",
+      "original_path_or_scope": "app/config.py",
+      "saved_path": "app/config.py",
+      "version_or_commit": "claude-sonnet-4-5, temperature 0, max_tokens 1024",
+      "used_during": "every draft",
+      "status": "used",
+      "redactions": []
+    },
+    {
+      "name": "Application system prompt",
+      "category": "prompts_and_rules",
+      "purpose": "Restricts the model to the supplied passages, requires verbatim excerpts, and defines the JSON response shape.",
+      "original_path_or_scope": "app/drafting.py :: SYSTEM_PROMPT",
+      "saved_path": "app/drafting.py",
+      "version_or_commit": "see git history for earlier wordings",
+      "used_during": "every draft",
+      "status": "used",
+      "redactions": []
+    },
+    {
+      "name": "Response cache",
+      "category": "application_models_and_parameters",
+      "purpose": "Records every live response so a reviewer can replay the run without an API key.",
+      "original_path_or_scope": "cache/",
+      "saved_path": "cache/",
+      "version_or_commit": "keyed by sha256(model id, temperature, max tokens, system prompt, user prompt)",
+      "used_during": "recorded in live mode, served in replay mode",
+      "status": "used",
+      "redactions": []
+    },
+    {
+      "name": "Anthropic SDK",
+      "category": "development_tools_and_models",
+      "purpose": "Transport for the Messages API.",
+      "original_path_or_scope": "requirements.txt",
+      "saved_path": "requirements.txt",
+      "version_or_commit": "anthropic==1.13.0",
+      "used_during": "live mode only",
+      "status": "used",
+      "redactions": []
+    },
+    {
+      "name": "MODEL_API_KEY",
+      "category": "permissions_and_environment_names",
+      "purpose": "Authenticates live model calls.",
+      "original_path_or_scope": "process environment",
+      "saved_path": "ai-workflow/.env.example",
+      "version_or_commit": "n/a",
+      "used_during": "live mode only",
+      "status": "redacted",
+      "redactions": ["value omitted; only the variable name is recorded"]
+    }
+  ],
+  "replay_command": "MODEL_MODE=replay python checks/run_checks.py --json checks/report-replay.json",
+  "workflow_example_path": "notes/llm-usage.md"
+}

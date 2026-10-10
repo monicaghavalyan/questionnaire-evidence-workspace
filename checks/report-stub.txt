@@ -1,0 +1,79 @@
+======================================================================================
+REFERENCE CASE RESULTS
+model mode      : stub   *** STUB: not a real model run ***
+model id        : stub-keyword-overlap
+strict coverage : True
+recorded responses in cache: 0
+run at          : 2026-10-10T14:26:53Z
+======================================================================================
+
+[PASS] RC-1  A supported question is answered with a citation that exists and supports it
+       covers: Minimum demonstration 1
+       rule  : Rule 1 - answer only from the supplied documents
+       ok   question text matches the fixture
+       ok   status is answered and awaiting review
+       ok   cited passage ids
+       ok   conflicting passage ids
+       ok   owner
+       ok   answer mentions the required facts
+       ok   all citations exist
+       ok   all citations current
+       ok   all excerpts verified
+
+[PASS] RC-2  An undocumented capability stays unresolved and is routed, not guessed
+       covers: Minimum demonstration 2
+       rule  : Rule 1 - an undocumented feature is unknown, not supported or unsupported; Rule 4 - owner from the supplied mapping
+       ok   question text matches the fixture
+       ok   status
+       ok   cited passage ids
+       ok   conflicting passage ids
+       ok   owner
+       ok   answer invents no capability
+       ok   reason explains why it is unresolved
+
+[PASS] RC-3  An explicitly superseded policy loses, and the conflict stays visible
+       covers: Minimum demonstration 3
+       rule  : Rule 2 - authority comes only from the supersedes field, and replaced text stays available
+       ok   question text matches the fixture
+       ok   status is answered and awaiting review
+       ok   cited passage ids
+       ok   conflicting passage ids
+       ok   answer mentions the required facts
+       ok   all citations current
+
+[PASS] RC-4  An approved correction is reused on the same question; an unapproved edit is not
+       covers: Minimum demonstration 4
+       rule  : Rule 3 - only an approved answer can be reused; an unapproved edit is a draft
+       ok   Q1 drafts with evidence
+       ok   an edit alone is only a draft
+       ok   an unapproved edit records no approval
+       ok   Q1 is approved
+       ok   approval snapshots its source versions
+       ok   reused answer text
+       ok   reused origin
+       ok   reused status
+       ok   reused sources
+       ok   reused answer carries the approval record
+       ok   reuse is attributed to Q1
+       ok   unapproved edit status
+       ok   unapproved edit is not offered for reuse
+       ok   a reuse is not counted as new answered work
+
+[PASS] RC-5  A changed source version sends an approved answer back for review; reload preserves state
+       covers: Minimum demonstration 5
+       rule  : Rule 3 - mark an approved answer for review if a referenced document version changes
+       ok   control answer starts approved
+       ok   the changed source is detected
+       ok   Q1 status after the version change
+       ok   the stored warning names the version change
+       ok   Q1 is no longer reusable
+       ok   Q13 does not receive the stale approved answer
+       ok   control answer stays approved
+       ok   status survives a reload
+       ok   evidence survives a reload
+       ok   the audit trail survives a reload
+
+======================================================================================
+5/5 reference cases passed
+======================================================================================
+report written to checks/report-stub.json
