@@ -50,6 +50,42 @@ def source_versions_changed(
     return changed
 
 
+def cited_authority_lost(
+    conn: sqlite3.Connection, cited_passage_ids: list[str]
+) -> list[dict[str, str]]:
+    """Cited passages whose document has since been superseded by a newer one.
+
+    Found while testing the --mode supersede path: inserting EXPORT-v3 leaves EXPORT-v2 at
+    version 2, so the version comparison alone saw no change, yet the approved answer was
+    now resting on a superseded passage. Rule 2 forbids answering from one, so an approval
+    in that position has to go back for review too.
+    """
+    lost: list[dict[str, str]] = []
+    for pid in cited_passage_ids or []:
+        doc = storage.passage_owner_document(conn, pid)
+        if doc is None:
+            lost.append({"passage_id": pid, "problem": "passage no longer exists"})
+        elif not doc["is_authoritative"]:
+            lost.append(
+                {
+                    "passage_id": pid,
+                    "problem": f"{doc['id']} is now superseded by {doc['superseded_by']}",
+                }
+            )
+    return lost
+
+
+def approval_is_stale(
+    conn: sqlite3.Connection, answer: dict[str, Any]
+) -> dict[str, Any] | None:
+    """Both staleness reasons in one place: version moved, or evidence lost authority."""
+    changed = source_versions_changed(conn, answer.get("source_versions") or {})
+    lost = cited_authority_lost(conn, answer.get("cited_passage_ids") or [])
+    if not changed and not lost:
+        return None
+    return {"version_changed": changed, "authority_lost": lost}
+
+
 def edit(
     conn: sqlite3.Connection, question_id: str, answer_text: str, note: str | None = None
 ) -> dict[str, Any]:
@@ -160,22 +196,35 @@ def refresh_source_change_flags(conn: sqlite3.Connection) -> list[dict[str, Any]
     for answer in storage.all_answers(conn):
         if answer["status"] != "approved":
             continue
-        changed = source_versions_changed(conn, answer.get("source_versions") or {})
-        if not changed:
+        stale = approval_is_stale(conn, answer)
+        if stale is None:
             continue
+        changed = stale["version_changed"]
+        lost = stale["authority_lost"]
         timestamp = now()
         warnings = list(answer.get("warnings") or [])
+        details = []
+        if changed:
+            details.append(
+                "version changed: "
+                + "; ".join(
+                    f"{doc} approved at v{info['approved_with_version']}, "
+                    f"now v{info['current_version']}"
+                    for doc, info in changed.items()
+                )
+            )
+        if lost:
+            details.append(
+                "evidence lost authority: "
+                + "; ".join(f"{item['passage_id']} - {item['problem']}" for item in lost)
+            )
         warnings.append(
             {
                 "code": "source_version_changed",
                 "message": (
-                    "A document behind this approved answer changed version: "
-                    + "; ".join(
-                        f"{doc} approved at v{info['approved_with_version']}, "
-                        f"now v{info['current_version']}"
-                        for doc, info in changed.items()
-                    )
-                    + ". The answer needs review before it can be reused."
+                    "A document behind this approved answer has moved ("
+                    + " | ".join(details)
+                    + "). The answer needs review before it can be reused."
                 ),
                 "passage_ids": answer.get("cited_passage_ids") or [],
             }
@@ -190,9 +239,9 @@ def refresh_source_change_flags(conn: sqlite3.Connection) -> list[dict[str, Any]
             },
         )
         storage.log_event(
-            conn, answer["question_id"], "flagged_needs_review", {"changed": changed}, timestamp
+            conn, answer["question_id"], "flagged_needs_review", stale, timestamp
         )
-        flagged.append({"question_id": answer["question_id"], "changed": changed})
+        flagged.append({"question_id": answer["question_id"], **stale})
     return flagged
 
 
@@ -208,6 +257,6 @@ def find_reusable(
     candidate = storage.find_approved_by_text(conn, question_text, exclude_question_id)
     if candidate is None:
         return None
-    if source_versions_changed(conn, candidate.get("source_versions") or {}):
+    if approval_is_stale(conn, candidate) is not None:
         return None
     return candidate
