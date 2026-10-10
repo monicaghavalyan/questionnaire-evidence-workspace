@@ -261,6 +261,23 @@ def main() -> int:
     args = parser.parse_args()
 
     mode = (args.mode or config.MODEL_MODE).lower()
+
+    # Pre-flight. Without this, replay mode against an empty cache fails every case with a
+    # confusing cascade ("Q12 has no answer text to approve") instead of the real reason.
+    if mode == "replay" and not model_client.cache_inventory():
+        print(
+            f"\nMODEL_MODE=replay, but no recorded responses were found in "
+            f"{config.CACHE_DIR}/.\n\n"
+            "Record them once with a real model:\n"
+            "    export MODEL_API_KEY=...\n"
+            "    MODEL_MODE=live python -c \"from app import storage,pipeline; "
+            "pipeline.draft_all(storage.connect(), force=True)\"\n\n"
+            "Or run the checks offline against the keyword stub (not a real model run):\n"
+            "    MODEL_MODE=stub python checks/run_checks.py\n",
+            file=sys.stderr,
+        )
+        return 2
+
     with REFERENCE_CASES.open(encoding="utf-8") as fh:
         spec = json.load(fh)
 
