@@ -1,15 +1,15 @@
 """Model integration with record / replay / stub modes.
 
-The submission has to be reviewable by someone who has no API key, so every live call is
-recorded to cache/<sha256>.json and can be replayed byte for byte afterwards.
+The project has to run for someone with no API key, so every live call is recorded to
+cache/<sha256>.json and can be replayed later.
 
     MODEL_MODE=live    call the provider, record the response        (needs MODEL_API_KEY)
     MODEL_MODE=replay  serve recorded responses, never use network   (the default)
     MODEL_MODE=stub    offline keyword-overlap stand-in, no network, no cache
 
 The cache key is a hash of everything that could change the answer: model id, temperature,
-max tokens, system prompt and user prompt. Change any of them and you get a cache miss
-rather than a stale response quietly reused.
+max tokens, system prompt and user prompt. If any of them changes, the old response is
+not used.
 
 The stub exists so the pipeline can be developed and the plumbing tested without
 credentials. It is NOT a model and never counts as a real run: it is labelled "stub"
@@ -93,13 +93,19 @@ def _call_live(
 
     client = anthropic.Anthropic(api_key=api_key)
     started = time.monotonic()
-    message = client.messages.create(
-        model=model_id,
-        max_tokens=max_tokens,
-        temperature=temperature,
-        system=system,
-        messages=[{"role": "user", "content": user}],
-    )
+    try:
+        message = client.messages.create(
+            model=model_id,
+            max_tokens=max_tokens,
+            system=system,
+            messages=[{"role": "user", "content": user}],
+            # anthropic 1.x dropped temperature from the create() signature; the API still
+            # accepts it for this model, so it is sent in the request body directly.
+            extra_body={"temperature": temperature},
+        )
+    except anthropic.APIError as exc:
+        # Turned into a visible "error" row by the pipeline instead of stopping the batch.
+        raise ModelError(f"model API call failed: {exc}") from exc
     latency_ms = int((time.monotonic() - started) * 1000)
     text = "".join(block.text for block in message.content if block.type == "text")
     usage = {
@@ -120,9 +126,9 @@ def _call_stub(user: str) -> str:
     """Naive keyword-overlap stand-in.
 
     It parses the passage block out of the prompt, scores each authoritative passage by
-    token overlap with the question, and answers with the best one. It is deliberately
-    unsophisticated: it has no idea whether the passage actually addresses the question,
-    which is precisely the failure the validation layer exists to catch.
+    token overlap with the question, and answers with the best one. It is intentionally
+    simple and does not check whether the passage answers the question; catching that is
+    the validator's job.
     """
     question = ""
     for line in user.splitlines():
